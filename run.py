@@ -2,10 +2,6 @@ import json
 import plotly
 import pandas as pd
 
-import nltk
-from nltk.corpus import stopwords
-nltk.download('stopwords')
-from sklearn.feature_extraction.text import CountVectorizer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 import random
@@ -17,7 +13,7 @@ from plotly.graph_objs import Bar
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 from utils import LengthExtractor, DigitExtractor, UrlExtractor, GpeExtractor
-
+from data_wrangling import data_wrangling
 
 app = Flask(__name__)
 
@@ -48,29 +44,14 @@ model = joblib.load("models/classifier.pkl")
 @app.route('/index')
 def index():
     
-    # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
-    genre_counts = df.groupby('genre').count()['message']
-    genre_names = list(genre_counts.index)
-    
-    temp = df.iloc[:, 4:]
-    a = pd.DataFrame({'Average': temp.mean()})
-    a = a[a.index != 'child_alone']
-    a = a.sort_values(by = 'Average', ascending = True)
-    
-    genre_count = pd.DataFrame({'genre_counts': df.genre.value_counts()})
     n = 150
-    vect = CountVectorizer(stop_words = stopwords.words('english'), ngram_range = (1, 2))
-    vected = vect.fit_transform(df.message)
-    sum_words = vected.sum(axis = 0)
-    words_freq = [[word, sum_words[0, idx]] for word, idx in vect.vocabulary_.items()]
-    words_freq =sorted(words_freq, key = lambda x: x[1], reverse=True)
-    words_info = pd.DataFrame(words_freq[:n])
+    genre_names, genre_counts, genre_count, a, words_info = data_wrangling(df, n)
+
+
     random.seed(37)
     colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(n-1)]
     
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -132,7 +113,7 @@ def index():
             }],
 
             'layout': {
-                'title': 'Word Cloud of First 150 Most Frequent Words <br> with Text Size Icreasing with Frequency',
+                'title': 'Word Cloud of the Most Frequent 150 Words <br> with Text Size Icreasing with Frequency',
                 'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
                 'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
                 'height' : 600,
@@ -173,3 +154,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+# Reference for Word Cloud : https://community.plot.ly/t/wordcloud-in-dash/11407/4

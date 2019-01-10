@@ -1,4 +1,5 @@
-# DisasterResponse
+# DisasterResponse Pipeline Project
+
 
 
 Classification of messages sent/posted on social media during disaster events.
@@ -36,8 +37,8 @@ Default code does not make grid search. In case you want to make
 grid search, change cv_search variable to 1 in main() function. Optimal values 
 of hperparameters fed to pipeline in default.
 
-Run run.py to deploy the result. It extracts the data from SQLite database and
-create data visualization. Plotly is used for data visualization.
+Run run.py to to run the web app. run.py extracts the data from SQLite 
+database and create data visualization. Plotly is used for data visualization.
 
 
 

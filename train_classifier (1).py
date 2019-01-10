@@ -202,10 +202,10 @@ def compare_models():
     '''
     
     
-   clf_lst = [LogisticRegression(random_state = 42, class_weight = 'balanced'),
-           MultinomialNB(), 
-           SVC(class_weight = 'balanced', kernel = 'rbf'),
-           RandomForestClassifier(random_state = 42, max_depth = 3)]
+    clf_lst = [LogisticRegression(random_state = 42, class_weight = 'balanced'),
+              MultinomialNB(),
+              SVC(class_weight = 'balanced', kernel = 'rbf'),
+              RandomForestClassifier(random_state = 42, max_depth = 3)]
 
     y_preds = []
     model_names = []
