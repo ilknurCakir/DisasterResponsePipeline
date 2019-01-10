@@ -17,23 +17,18 @@ from nltk import pos_tag, ne_chunk
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.multioutput import MultiOutputClassifier
-#from sklearn.multiclass import OneVsRestClassifier
-#from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.linear_model import LogisticRegression
 from sklearn.base import BaseEstimator, TransformerMixin
-#from sklearn.feature_extraction import DictVectorizer
-#from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.metrics import classification_report, accuracy_score, make_scorer, fbeta_score
 from sklearn.metrics import precision_score, recall_score
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import SVC
 import argparse
 import pickle
 from utils import tokenize, LengthExtractor, DigitExtractor, UrlExtractor, GpeExtractor
 
+# getting inputs from keyboard
 parser = argparse.ArgumentParser(description = 'Get database path and pickle file name')
 
 parser.add_argument('dbase_path', help = 'Database filepath')
@@ -135,7 +130,7 @@ def make_gridobject():
     
     scorer = make_scorer(accuracy_score)
     
-    gridobj = GridSearchCV(pipeline, param_grid = parameters, scoring = scorer)
+    gridobj = GridSearchCV(pipeline, param_grid = parameters, scoring = scorer, cv = 3)
     
     return gridobj
     
@@ -171,6 +166,63 @@ def display_results(y_test, y_pred, colnames, cv = None):
         print('Best Parameters:----------------------------------------------')
         print(cv.best_params_)
         
+# -----------------------------compare different models-----------------------------------
+def compare_fscore(models, y_preds, y_test):
+    '''Compares f scores of different models for each category
+    INPUTs:
+    models - (list) list of models' names
+    y_preds - (list) list of predicted values of different
+                models to be compared
+    y_test - (dataframe) df of test values to be used in 
+                calculation of fscores
+                
+    OUTPUT:
+    arr - (dataframe) dataframe with columns of fscores for each
+            category when a model in models list is used in 
+            MultiOutputClassifier
+    '''
+    
+    arr = pd.DataFrame(0, index = [i for i in range(y_test.shape[1])], columns = models)
+    for i in range(len(y_preds)):
+        y_pred = y_preds[i]
+        for col in range(y_test.shape[1]):
+            
+            arr.iloc[col, i] = round(fbeta_score(y_test[:, col], y_pred[:, col], beta = 1), 4)
+            
+    
+    return arr
+
+
+def compare_models():
+    '''Compares the performance of different models as an input
+    to MultiOutputClassifier
+    OUTPUT:
+    comparison_df - (dataframe) df with columns of f-score obtained 
+                from each model
+    '''
+    
+    
+   clf_lst = [LogisticRegression(random_state = 42, class_weight = 'balanced'),
+           MultinomialNB(), 
+           SVC(class_weight = 'balanced', kernel = 'rbf'),
+           RandomForestClassifier(random_state = 42, max_depth = 3)]
+
+    y_preds = []
+    model_names = []
+
+    for clf in clf_lst:
+        model = make_pipeline(clf)
+        model.fit(X_train, y_train)
+        name = clf.__class__.__name__
+        model_names.append(name)
+        y_predicted= model.predict(X_test)
+        y_preds.append(y_predicted)
+
+    
+    comparison_df = compare_fscore(model_names, y_preds, y_test)
+    
+    return comparison_df
+
 #------------------------ saving the model ----------------------------------------------
 def save_model(model, model_filepath):
     
@@ -178,35 +230,46 @@ def save_model(model, model_filepath):
         pickle.dump(model, file, protocol=pickle.HIGHEST_PROTOCOL)
     
 #-------------------------------- main -------------------------------------------
-def main():
+def main(cv_search = False):
     
     print('Loading data... \n   DATABASE: {}'.format(database_filepath))
     
     X, y, colnames = load_data(database_filepath)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = .25)
     
-    print('Building model...')
-    model = make_pipeline(LogisticRegression(random_state = 42, class_weight = 'balanced'))
-    #cv = make_gridobject()
-    
-    print('Training Model...')
-    #print('Making Grid Search for optimal parameters...')
-    #cv.fit(X_train, y_train)
-    model.fit(X_train, y_train)
-    
-    #print('Grid Search is done...')
-    #model = cv.best_estimator_
-    print('Training is done...')
+    if cv_search:
+        
+        print('Building model...')
+        cv = make_gridobject()
+        
+        print('Training Model...')
+        print('Making Grid Search for optimal parameters...')
+        cv.fit(X_train, y_train)
+        model = cv.best_estimator_
+        
+        print('Grid Search is done...')
+        #print('Comparing different machine learning models...')
+        #print(compare_models())
+        
+    else:
+        print('Building model...')
+        model = make_pipeline(LogisticRegression(random_state = 42, class_weight = 'balanced'))
+        
+        print('Training Model...')
+        model.fit(X_train, y_train)
+        
+        print('Training is done...')
+        
     print('Predicting test data...')
     pred = model.predict(X_test)
-    
+        
     print('Evaluating Model...')
     display_results(y_test, pred, colnames)
     
     print('Saving Model...\n    MODEL: {}'.format(model_filepath))
     save_model(model, model_filepath)
     
-    print('Trained model saved!')    
+    print('Trained model saved!')
     
     
     
