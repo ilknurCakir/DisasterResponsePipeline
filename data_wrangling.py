@@ -6,7 +6,26 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 
 def data_wrangling(df, n):
-    
+    ''' Takes df and returns data ready to create plotly
+    graphs. 
+    INPUTs:
+    df - (dataframe) cleaned data including messages and categories
+    n - (int) the number of the most frequent words in messages to
+            be depicted in word cloud
+            
+    OUTPUTs:
+    genre_names - (list) a list containing genre names
+    genre_counts - (list) a list containing the counts of 
+                    different genres
+    genre_count - (dataframe) dataframe with columns of genres and 
+                    their counts
+    a - (dataframe) df with columns of different categories and
+                    their average values. It gives the percentage
+                    of messages included in these categories.
+    words_info - (dataframe) the most frequent n words and their
+                    frequencies
+                    
+    '''
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
