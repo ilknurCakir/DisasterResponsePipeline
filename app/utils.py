@@ -8,26 +8,15 @@ nltk.download('maxent_ne_chunker')
 nltk.download('words')
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag, ne_chunk
-
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.linear_model import LogisticRegression
 from sklearn.base import BaseEstimator, TransformerMixin
-#from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.metrics import classification_report, accuracy_score, make_scorer, fbeta_score
-from sklearn.metrics import precision_score, recall_score
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import SVC
-import argparse
-import pickle
+
+
 
 #------------------------------------- tokenize --------------------------------
 def tokenize(text):
